@@ -2,9 +2,11 @@
 
 C++ class for **Fabrice Bellard libbf library** (decimal part only)
 
-- this work is mostly done to replace [mpreal class](https://github.com/advanpix/mpreal/) (C++ helper class over [mpfr](http://mpfr.org))
-- for being used in [rpn functional language](https://github.com/louisrubet/rpn)
-- Fabrice Bellard's libbf is taken without modifications in [this github repository](https://github.com/rurban/libbf).
+This ["Tiny Big Float library" libbf](https://bellard.org/libbf/) allows to do IEEE 754 floating point calculations (both binary and decimal) with arbitrary precision and transcendent functions. [This online calculator](http://numcalc.com/) uses libbf.
+
+- This class is mostly done to replace [mpreal class](https://github.com/advanpix/mpreal/), which is a C++ helper class over [mpfr](http://mpfr.org),
+- for being used in [rpn functional language](https://github.com/louisrubet/rpn),
+- libbf is included without modifications as a submodule from [this github repository](https://github.com/rurban/libbf).
 
 Fake `quickjs.h` and `quickjs-config.h` are provided so libbfdec-cpp can be build without including [quickjs](https://bellard.org/quickjs/).
 
@@ -19,7 +21,7 @@ mkdir build
 cmake -B build && make -C build
 ```
 
-## run est
+## run test
 
 ```
 build/libbfdec-cpp-test
