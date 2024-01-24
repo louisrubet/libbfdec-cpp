@@ -1,6 +1,7 @@
 #pragma once
 #include <complex>
 #include <string>
+#include <iostream>
 
 extern "C" {
     #include "libbf.h"
@@ -15,12 +16,12 @@ class Bfdec {
  private:
     bfdec_t mp;
     static bf_context_t bf_ctx;
-    static void* bf_realloc(__attribute__((unused)) void*, void* ptr, size_t size) { return realloc(ptr, size); }
+    static void* bf_realloc(__attribute__((unused)) void*, void* ptr, size_t size) { if (size >0) return realloc(ptr, size); else return nullptr; }
 
  public:
     // Get default rounding mode & precision
     inline static mp_rnd_t get_default_rnd() { return BF_RNDZ; }
-    inline static mp_prec_t get_default_prec() { return BF_PREC_INF; }
+    inline static mp_prec_t get_default_prec() { return 34; }
 
     // Constructors && type conversions
     Bfdec() { bfdec_init(&bf_ctx, &mp); }
@@ -34,19 +35,11 @@ class Bfdec {
           mp_rnd_t mode = Bfdec::get_default_rnd());
     Bfdec(const long long int u, mp_prec_t prec = Bfdec::get_default_prec(), mp_rnd_t mode = Bfdec::get_default_rnd());
     Bfdec(const unsigned long int u, mp_prec_t prec = Bfdec::get_default_prec(),
-          mp_rnd_t mode = Bfdec::get_default_rnd()) {
-        bfdec_init(&bf_ctx, &mp);
-        bfdec_set_ui(&mp, u);
-    }
+          mp_rnd_t mode = Bfdec::get_default_rnd()):Bfdec() { bfdec_set_ui(&mp, u); }
     Bfdec(const unsigned int u, mp_prec_t prec = Bfdec::get_default_prec(), mp_rnd_t mode = Bfdec::get_default_rnd());
-    Bfdec(const long int u, mp_prec_t prec = Bfdec::get_default_prec(), mp_rnd_t mode = Bfdec::get_default_rnd()) {
-        bfdec_init(&bf_ctx, &mp);
-        bfdec_set_si(&mp, u);
-    }
-    Bfdec(const int u, mp_prec_t prec = Bfdec::get_default_prec(), mp_rnd_t mode = Bfdec::get_default_rnd()) {
-        bfdec_init(&bf_ctx, &mp);
-        bfdec_set_si(&mp, u);
-    }
+    Bfdec(const long int u, mp_prec_t prec = Bfdec::get_default_prec(), mp_rnd_t mode = Bfdec::get_default_rnd()):Bfdec() { bfdec_set_si(&mp, u); }
+    Bfdec(const int u, mp_prec_t prec = Bfdec::get_default_prec(), mp_rnd_t mode = Bfdec::get_default_rnd()):Bfdec() {
+        bfdec_set_si(&mp, u); }
 
     // Construct Bfdec from bfdec_t structure.
     // shared = true allows to avoid deep copy, so that Bfdec and 'u' share the same data & pointers.
@@ -57,7 +50,7 @@ class Bfdec {
     Bfdec(const std::string& s, mp_prec_t prec = Bfdec::get_default_prec(), int base = 10,
           mp_rnd_t mode = Bfdec::get_default_rnd());
 
-    ~Bfdec() { }
+    ~Bfdec() { bfdec_delete(&mp); }
 
     static void clear_cache() { bf_clear_cache(&Bfdec::bf_ctx); }
 
@@ -92,7 +85,10 @@ class Bfdec {
     Bfdec& operator=(const std::complex<real_t>& z);
 
     // +
-    Bfdec& operator+=(const Bfdec& v) { return *this; }
+    Bfdec& operator+=(const Bfdec& v) {
+        bfdec_add(&mp, &mp, &v.mp, Bfdec::get_default_prec(), Bfdec::get_default_rnd());
+        return *this;
+    }
     // Bfdec& operator+=(const mpf_t v);
     // Bfdec& operator+=(const mpz_t v);
     // Bfdec& operator+=(const mpq_t v);
@@ -118,7 +114,7 @@ class Bfdec {
 
     // -
     Bfdec& operator-=(const Bfdec& v) {
-        bfdec_sub(&mp, &mp, &v.mp, Bfdec::get_default_rnd(), Bfdec::get_default_prec());
+        bfdec_sub(&mp, &mp, &v.mp, Bfdec::get_default_prec(), Bfdec::get_default_rnd());
         return *this;
     }
     // Bfdec& operator-=(const mpz_t v);
@@ -144,7 +140,7 @@ class Bfdec {
 
     // *
     Bfdec& operator*=(const Bfdec& v) {
-        bfdec_mul(&mp, &mp, &v.mp, Bfdec::get_default_rnd(), Bfdec::get_default_prec());
+        bfdec_mul(&mp, &mp, &v.mp, Bfdec::get_default_prec(), Bfdec::get_default_rnd());
         return *this;
     }
     // Bfdec& operator*=(const mpz_t v);
@@ -158,7 +154,7 @@ class Bfdec {
 
     // /
     Bfdec& operator/=(const Bfdec& v) {
-        bfdec_div(&mp, &mp, &v.mp, Bfdec::get_default_rnd(), Bfdec::get_default_prec());
+        bfdec_div(&mp, &mp, &v.mp, Bfdec::get_default_prec(), Bfdec::get_default_rnd());
         return *this;
     }
     // Bfdec& operator/=(const mpz_t v);
@@ -410,7 +406,7 @@ class Bfdec {
     // #endif
 
     // Instance Checkers
-    friend bool isnan(const Bfdec& v);
+    friend bool isnan(const Bfdec& v) { return bfdec_is_nan(&v.mp); }
     friend bool isinf(const Bfdec& v);
     friend bool isfinite(const Bfdec& v);
 
